@@ -7,9 +7,7 @@ class VectorStore:
     def __init__(self, collection_name: str = "video_frames"):
         self.collection_name = collection_name
         # Initialize Qdrant client (local instance)
-        self.client = QdrantClient(":memory:")  # For production, use a persistent location
-        
-        # Create collection if it doesn't exist
+        self.client = QdrantClient(":memory:")  
         self.create_collection()
     
     def create_collection(self, vector_size: int = 48):
@@ -43,27 +41,25 @@ class VectorStore:
                 )
             )
         
-        # Insert vectors in batches
+        # Inserting vectors in batches
         self.client.upsert(
             collection_name=self.collection_name,
             points=points
         )
     
     def search_similar(self, vector: List[float], top_k: int = 5):
-        """Search for similar vectors"""
         search_result = self.client.search(
             collection_name=self.collection_name,
             query_vector=vector,
-            limit=top_k
+            limit=top_k,
+            with_vectors=True  
         )
-        
         results = []
         for hit in search_result:
             results.append({
-                "frame_id": hit.payload["frame_id"],
-                "frame_path": hit.payload["frame_path"],
-                "vector": hit.vector,  # This might need to be adjusted based on Qdrant's response
-                "score": hit.score
+            "frame_id": hit.payload["frame_id"],
+            "frame_path": hit.payload["frame_path"],
+            "vector": hit.vector,
+            "score": hit.score
             })
-            
         return results
